@@ -1,0 +1,119 @@
+import os
+
+TAMANHO = 5
+NUM_NAVIOS = 3
+
+def limpar_tela():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+def criar_tabuleiro():
+    return [["~"] * TAMANHO for _ in range(TAMANHO)]
+
+def imprimir_tabuleiro(tabuleiro, esconder_navios=True):
+    print("  " + " ".join(str(i) for i in range(TAMANHO)))
+    for i, linha in enumerate(tabuleiro):
+        linha_visivel = []
+        for celula in linha:
+            if esconder_navios and celula == "N":
+                linha_visivel.append("~")
+            else:
+                linha_visivel.append(celula)
+        print(f"{i} " + " ".join(linha_visivel))
+
+def posicionar_navios_manual(tabuleiro, jogador):
+    navios_colocados = 0
+    while navios_colocados < NUM_NAVIOS:
+        imprimir_tabuleiro(tabuleiro, esconder_navios=False)
+        try:
+            print(f"\n{jogador}, posicione o navio #{navios_colocados + 1}")
+            linha = int(input("Linha (0-4): "))
+            coluna = int(input("Coluna (0-4): "))
+        except ValueError:
+            print("Entrada inválida. Tente novamente.")
+            continue
+
+        if not (0 <= linha < TAMANHO and 0 <= coluna < TAMANHO):
+            print("Coordenadas fora do tabuleiro.")
+        elif tabuleiro[linha][coluna] == "N":
+            print("Já há um navio aqui.")
+        else:
+            tabuleiro[linha][coluna] = "N"
+            navios_colocados += 1
+            limpar_tela()
+
+def jogada_valida(linha, coluna):
+    return 0 <= linha < TAMANHO and 0 <= coluna < TAMANHO
+
+def realizar_ataque(tabuleiro_defensor, tabuleiro_visao, jogador):
+    while True:
+        try:
+            print(f"{jogador}, é sua vez de atacar!")
+            linha = int(input("Linha (0-4): "))
+            coluna = int(input("Coluna (0-4): "))
+        except ValueError:
+            print("Digite números válidos.")
+            continue
+
+        if not jogada_valida(linha, coluna):
+            print("Coordenadas fora do tabuleiro.")
+        elif tabuleiro_visao[linha][coluna] in ["X", "O"]:
+            print("Você já atacou essa posição.")
+        else:
+            if tabuleiro_defensor[linha][coluna] == "N":
+                print("🎯 Acertou um navio!")
+                tabuleiro_visao[linha][coluna] = "X"
+                tabuleiro_defensor[linha][coluna] = "X"
+                return True
+            else:
+                print("💦 Água!")
+                tabuleiro_visao[linha][coluna] = "O"
+                return False
+
+def contar_navios_restantes(tabuleiro):
+    return sum(linha.count("N") for linha in tabuleiro)
+
+def jogo_batalha_naval_2jogadores():
+    tabuleiro_p1 = criar_tabuleiro()
+    tabuleiro_p2 = criar_tabuleiro()
+    visao_p1 = criar_tabuleiro()
+    visao_p2 = criar_tabuleiro()
+
+    print("Jogador 1, prepare-se para posicionar seus navios.")
+    input("Pressione ENTER para começar...")
+    limpar_tela()
+    posicionar_navios_manual(tabuleiro_p1, "Jogador 1")
+
+    print("Jogador 2, prepare-se para posicionar seus navios.")
+    input("Pressione ENTER para começar...")
+    limpar_tela()
+    posicionar_navios_manual(tabuleiro_p2, "Jogador 2")
+
+    turno = 1
+
+    while True:
+        if turno % 2 == 1:
+            jogador = "Jogador 1"
+            tabuleiro_ataque = visao_p1
+            tabuleiro_alvo = tabuleiro_p2
+        else:
+            jogador = "Jogador 2"
+            tabuleiro_ataque = visao_p2
+            tabuleiro_alvo = tabuleiro_p1
+
+        print(f"\n{jogador}, aqui está seu tabuleiro de ataques:")
+        imprimir_tabuleiro(tabuleiro_ataque, esconder_navios=False)
+
+        acertou = realizar_ataque(tabuleiro_alvo, tabuleiro_ataque, jogador)
+        navios_restantes = contar_navios_restantes(tabuleiro_alvo)
+
+        if navios_restantes == 0:
+            print(f"\n🏆 {jogador} venceu! Todos os navios inimigos foram afundados.")
+            break
+
+        input("Pressione ENTER para passar o turno.")
+        limpar_tela()
+        turno += 1
+
+# Executa o jogo
+if __name__ == "__main__":
+    jogo_batalha_naval_2jogadores()
